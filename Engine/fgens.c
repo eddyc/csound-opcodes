@@ -3521,3 +3521,13 @@ static CS_NOINLINE FUNC *gen01_defer_load(CSOUND *csound, int fno)
     }
     return csound->flist[fno];
 }
+
+/*
+ * Chronicle exports - expose gen routines for direct use
+ * These simply call the internal static functions.
+ */
+#ifdef CHRONICLE
+int chronicle_gen05(FGDATA *ff, FUNC *ftp) { return gen05(ff, ftp); }
+int chronicle_gen07(FGDATA *ff, FUNC *ftp) { return gen07(ff, ftp); }
+int chronicle_gen10(FGDATA *ff, FUNC *ftp) { return gen10(ff, ftp); }
+#endif /* CHRONICLE */

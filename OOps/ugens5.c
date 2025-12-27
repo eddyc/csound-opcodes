@@ -26,11 +26,13 @@
 #include <math.h>
 #include <inttypes.h>
 
+#ifndef CHRONICLE_NO_LPC
 /*
  * LPC storage slots
  */
 
 #define MAX_LPC_SLOT 20
+#endif /* CHRONICLE_NO_LPC */
 
 
 int32_t porset(CSOUND *csound, PORT *p)
@@ -581,6 +583,7 @@ int32_t areson(CSOUND *csound, RESON *p)
     return OK;
 }
 
+#ifndef CHRONICLE_NO_LPC
 /*
  *
  * LPREAD opcode : initialisation phase
@@ -1205,6 +1208,7 @@ int32_t lpfreson(CSOUND *csound, LPFRESON *p)
     p->prvout = x;
     return OK;
 }
+#endif /* CHRONICLE_NO_LPC */
 
 int32_t rmsset(CSOUND *csound, RMS *p)
 {
@@ -1395,6 +1399,7 @@ int32_t balance2(CSOUND *csound, BALANCE *p)
     return OK;
 }
 
+#ifndef CHRONICLE_NO_LPC
 /*
  *   Set current lpc slot
  */
@@ -1510,6 +1515,7 @@ int32_t lpinterpol(CSOUND *csound, LPINTERPOL *p)
     }
     return OK;
 }
+#endif /* CHRONICLE_NO_LPC */
 
 
 int32_t klimit(CSOUND *csound, LIMIT *p)
