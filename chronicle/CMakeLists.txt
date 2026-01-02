@@ -33,8 +33,9 @@ set(CSOUND_INCLUDES
 
 # Core opcode sources
 set(OPCODE_SOURCES
-    # Opcode registry - SSOT for all opcode metadata
-    ${CMAKE_CURRENT_SOURCE_DIR}/opcode_registry.c
+    # Opcode registry - GENERATED from chronicle-catalogue/src/opcodes/csound-specs.ts
+    # Run `pnpm --filter=@eddyc/chronicle-catalogue generate:csound-registry` to regenerate
+    ${CMAKE_CURRENT_SOURCE_DIR}/generated/opcode_registry.c
     # GEN routines for wavetables
     ${CMAKE_CURRENT_SOURCE_DIR}/fgens_chronicle.c
     # Oscillators: phasor, oscil, etc.
