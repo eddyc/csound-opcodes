@@ -22,6 +22,8 @@
 #include "CsoundShim.hpp"
 #include "ugens2.h"
 #include "ugens5.h"
+#include "newfils.h"
+#include "oscbnk.h"
 
 /* Forward declarations of opcode functions we use */
 int32_t phsset(CSOUND *csound, PHSOR *p);
@@ -32,6 +34,10 @@ int32_t tonset(CSOUND *csound, TONE *p);
 int32_t tone(CSOUND *csound, TONE *p);
 int32_t porset(CSOUND *csound, PORT *p);
 int32_t kport(CSOUND *csound, PORT *p);
+int32_t moogladder_init(CSOUND *csound, moogladder *p);
+int32_t moogladder_process(CSOUND *csound, moogladder *p);
+int32_t vco2set(CSOUND *csound, VCO2 *p);
+int32_t vco2(CSOUND *csound, VCO2 *p);
 
 /* Version string */
 static const char* LIB_VERSION = "1.0.0";
@@ -59,6 +65,12 @@ static const CsoundOpcodeEntry opcodes[] = {
     /* Filters (from ugens5.c) */
     CSOUND_OP(lpf,    TONE,  ar,  tonset, tone,    asig, khp, istor),
     CSOUND_OP(port,   PORT,  kr,  porset, kport,   ksig, ihtim, isig),
+
+    /* New filters (from newfils.c) */
+    CSOUND_OP(moogladder, moogladder, out, moogladder_init, moogladder_process, in, freq, res, istor),
+
+    /* Band-limited oscillators (from oscbnk.c) */
+    CSOUND_OP(vco2, VCO2, ar, vco2set, vco2, kamp, kcps, imode, kpw, kphs, inyx),
 
     /* Terminator - must be last */
     { NULL, 0, 0, 0, {0}, NULL, NULL }

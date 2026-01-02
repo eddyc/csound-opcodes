@@ -21,14 +21,23 @@
     02110-1301 USA
 */
 
+#ifdef CHRONICLE
+/* Chronicle build: use our shims */
+#include <stdopcod.h>
+#include <oscbnk.h>
+#else
 #include "stdopcod.h"
 #include "oscbnk.h"
+#endif
 #include <math.h>
 
+#ifndef CHRONICLE
+/* get_oscbnk_globals is defined in our stdopcod.h shim for Chronicle */
 static inline STDOPCOD_GLOBALS *get_oscbnk_globals(CSOUND *csound)
 {
     return ((STDOPCOD_GLOBALS*) csound->stdOp_Env);
 }
+#endif
 
 /* ---- oscbnk, grain2, and grain3 - written by Istvan Varga, 2001 ---- */
 
@@ -78,6 +87,9 @@ static uint32 oscbnk_rnd_phase(int32 *seed)
     /* convert seed to phase */
     return ((uint32) *seed >> OSCBNK_RNDPHS);
 }
+
+#ifndef CHRONICLE
+/* The following functions are only used by oscbnk/grain opcodes, not vco2 */
 
 /* return a random value between -1 and 1 */
 
@@ -1264,6 +1276,9 @@ static int32_t osckaikt(CSOUND *csound, OSCKT *p)
     return OK;
 }
 
+#endif /* CHRONICLE - pause guard for oscbnk_flen_setup (used by vco2) */
+
+/* This utility function is used by vco2, so keep it outside the guard */
 static void oscbnk_flen_setup(int32 flen, uint32 *mask,
                               uint32 *lobits, MYFLT *pfrac)
 {
@@ -1277,6 +1292,9 @@ static void oscbnk_flen_setup(int32 flen, uint32 *mask,
     }
     *pfrac = FL(1.0) / (MYFLT) *mask; (*mask)--;
 }
+
+#ifndef CHRONICLE
+/* Continue guarding non-vco2 opcodes */
 
 static int32_t oscakikt(CSOUND *csound, OSCKT *p)
 {
@@ -1500,6 +1518,8 @@ static int32_t osckts(CSOUND *csound, OSCKTS *p)
     return OK;
 }
 
+#endif /* CHRONICLE - end of non-vco2 opcodes */
+
 /* ---- vco2init, vco2ft, and vco2 opcodes by Istvan Varga, Sep 2002 ---- */
 
 /* table arrays for vco2 opcode */
@@ -1510,6 +1530,8 @@ static int32_t osckts(CSOUND *csound, OSCKTS *p)
 /*   4: triangle                */
 /*   5 and above: user defined  */
 
+#ifndef CHRONICLE
+/* These are defined in our oscbnk.h shim for Chronicle */
 #define VCO2_MAX_NPART  4096    /* maximum number of harmonic partials */
 
 typedef struct {
@@ -1519,6 +1541,7 @@ typedef struct {
     int32_t     min_size, max_size; /* minimum and maximum table size            */
     MYFLT   *w_fftbuf;          /* FFT of user specified waveform            */
 } VCO2_TABLE_PARAMS;
+#endif
 
 /* remove table array for the specified waveform */
 
@@ -1760,12 +1783,15 @@ static int32_t vco2_tables_create(CSOUND *csound, int32_t waveform,
                         &(tables->tables[i].lobits),
                         &(tables->tables[i].pfrac));
       /* if base ftable was specified, generate empty table ... */
+#ifndef CHRONICLE
+      /* Chronicle doesn't use Csound ftables for vco2, always allocate internally */
       if (base_ftable > 0) {
         csound->FTAlloc(csound, base_ftable, (int32_t) tables->tables[i].size);
         csoundGetTable(csound, &(tables->tables[i].ftable), base_ftable);
         base_ftable++;                /* next table number */
       }
       else    /* ... else allocate memory (cannot be accessed as a       */
+#endif
         tables->tables[i].ftable =      /* standard Csound ftable) */
           (MYFLT*) csound->Malloc(csound, sizeof(MYFLT)
                                           * (tables->tables[i].size + 1));
@@ -1785,6 +1811,9 @@ static int32_t vco2_tables_create(CSOUND *csound, int32_t waveform,
 
     return base_ftable;
 }
+
+#ifndef CHRONICLE
+/* vco2init and vco2ft opcodes are not used by Chronicle - only vco2 */
 
 /* ---- vco2init opcode ---- */
 
@@ -1975,9 +2004,15 @@ static int32_t vco2ft(CSOUND *csound, VCO2FT *p)
                              Str("vco2ft: not initialised"));
 }
 
+#endif /* CHRONICLE - end of vco2init/vco2ft guard */
+
 /* ---- vco2 opcode (initialisation) ---- */
 
+#ifdef CHRONICLE
+int32_t vco2set(CSOUND *csound, VCO2 *p)
+#else
 static int32_t vco2set(CSOUND *csound, VCO2 *p)
+#endif
 {
     int32_t     mode, tnum;
     int32_t     tnums[8] = { 0, 0, 1, 2, 1, 3, 4, 5 };
@@ -1990,12 +2025,16 @@ static int32_t vco2set(CSOUND *csound, VCO2 *p)
       p->vco2_nr_table_arrays = &(pp->vco2_nr_table_arrays);
       p->vco2_tables = &(pp->vco2_tables);
     }
+#ifndef CHRONICLE
+    /* Chronicle always passes fixed arguments, skip argument count checks */
     /* check number of args */
     if (UNLIKELY(p->INOCOUNT > 6)) {
       return csound->InitError(csound, Str("vco2: too many input arguments"));
     }
+#endif
     mode = (int32_t) MYFLT2LONG(*(p->imode)) & 0x1F;
     if (mode & 1) return OK;               /* skip initialisation */
+#ifndef CHRONICLE
     /* more checks */
     min_args = 2;
     if ((mode & 14) == 2 || (mode & 14) == 4) min_args = 4;
@@ -2010,6 +2049,9 @@ static int32_t vco2set(CSOUND *csound, VCO2 *p)
 //    if (UNLIKELY(p->XINCODE)) {
 //      return csound->InitError(csound, Str("vco2: invalid argument type"));
 //    }
+#else
+    (void)min_args; /* unused in Chronicle build */
+#endif
 
     /* select table array and algorithm, according to waveform */
     tnum = tnums[(mode & 14) >> 1];
@@ -2036,14 +2078,29 @@ static int32_t vco2set(CSOUND *csound, VCO2 *p)
     /* set misc. parameters */
     p->init_k = 1;
     p->pm_enabled = (mode & 16 ? 1 : 0);
+#ifdef CHRONICLE
+    /* Chronicle always passes all arguments including kphs */
+    if (mode & 16)
+      p->phs = 0UL;
+    else {
+      x = *(p->kphs); x -= (MYFLT) ((int32) x);
+      p->phs = OSCBNK_PHS2INT(x);
+    }
+#else
     if ((mode & 16) || (p->INOCOUNT < 5))
       p->phs = 0UL;
     else {
       x = *(p->kphs); x -= (MYFLT) ((int32) x);
       p->phs = OSCBNK_PHS2INT(x);
     }
+#endif
     p->f_scl = csound->onedsr;
+#ifdef CHRONICLE
+    /* Chronicle always passes inyx */
+    x = *(p->inyx);
+#else
     x = (p->INOCOUNT < 6 ? FL(0.5) : *(p->inyx));
+#endif
     if (x < FL(0.001)) x = FL(0.001);
     if (x > FL(0.5)) x = FL(0.5);
     p->p_min = x / (MYFLT) VCO2_MAX_NPART;
@@ -2053,7 +2110,11 @@ static int32_t vco2set(CSOUND *csound, VCO2 *p)
 
 /* ---- vco2 opcode (performance) ---- */
 
+#ifdef CHRONICLE
+int32_t vco2(CSOUND *csound, VCO2 *p)
+#else
 static int32_t vco2(CSOUND *csound, VCO2 *p)
+#endif
 {
     uint32_t offset = p->h.insdshead->ksmps_offset;
     uint32_t early  = p->h.insdshead->ksmps_no_end;
@@ -2185,6 +2246,9 @@ static int32_t vco2(CSOUND *csound, VCO2 *p)
     p->phs = phs;
     return OK;
 }
+
+#ifndef CHRONICLE
+/* The following opcodes are not needed for Chronicle */
 
 /* ---- denorm opcode ---- */
 
@@ -2640,3 +2704,5 @@ int32_t oscbnk_init_(CSOUND *csound)
                                  (int32_t
                                   ) (sizeof(localops) / sizeof(OENTRY)));
 }
+
+#endif /* CHRONICLE */

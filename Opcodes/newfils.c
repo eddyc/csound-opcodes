@@ -22,9 +22,13 @@
   02110-1301 USA
 */
 
+#ifdef CHRONICLE
+#include <stdopcod.h>  // Use Chronicle's shim via include path
+#include <newfils.h>   // Use Chronicle's shim via include path
+#else
 #include "stdopcod.h"
-
 #include "newfils.h"
+#endif
 #include <math.h>
 
 static inline
@@ -54,7 +58,11 @@ static double TanH(double x)
   return sign*fast_tanh(x);
 }
 
+#ifdef CHRONICLE
+int32_t moogladder_init(CSOUND *csound, moogladder *p)
+#else
 static int32_t moogladder_init(CSOUND *csound, moogladder *p)
+#endif
 {
   /* int32_t i; */
   IGN(csound);
@@ -71,7 +79,11 @@ static int32_t moogladder_init(CSOUND *csound, moogladder *p)
   return OK;
 }
 
+#ifdef CHRONICLE
+int32_t moogladder_process(CSOUND *csound, moogladder *p)
+#else
 static int32_t moogladder_process(CSOUND *csound, moogladder *p)
+#endif
 {
   MYFLT   *out = p->out;
   MYFLT   *in = p->in;
@@ -825,6 +837,10 @@ static int32_t moogladder2_process_ka(CSOUND *csound, moogladder *p)
   }
   return OK;
 }
+
+#ifndef CHRONICLE
+/* The following opcodes (statevar, fofilter, bob, etc.) require GetSr
+   which isn't needed for moogladder. Chronicle only uses moogladder. */
 
 static int32_t statevar_init(CSOUND *csound,statevar *p)
 {
@@ -3533,3 +3549,5 @@ int32_t newfils_init_(CSOUND *csound)
                                (int32_t
                                 ) (sizeof(localops) / sizeof(OENTRY)));
 }
+
+#endif /* CHRONICLE */

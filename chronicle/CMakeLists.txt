@@ -41,6 +41,10 @@ set(OPCODE_SOURCES
     ${CSOUND_ROOT}/OOps/ugens2.c
     # Filters: tone, port, reson, etc.
     ${CSOUND_ROOT}/OOps/ugens5.c
+    # New filters: moogladder, statevar, etc.
+    ${CSOUND_ROOT}/Opcodes/newfils.c
+    # Band-limited oscillators: vco2
+    ${CSOUND_ROOT}/Opcodes/oscbnk.c
 )
 
 # Platform-specific build configuration
